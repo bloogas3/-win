@@ -1,0 +1,330 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <title>Sheduler Pro | Полный контроль</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="container">
+        <main class="content">
+            <div class="header-row">
+                <h1>Контроль: <span class="neon-blue" id="roleDisplay">...</span></h1>
+                <button class="btn-outline" onclick="logout()">Выход</button>
+            </div>
+
+            <section class="card selection-form">
+                <div class="input-row" id="adminControls">
+                    <div class="field">
+                        <label>Альянс</label>
+                        <select id="allianceSelect" onchange="filterGroupsByAlliance()"></select>
+                    </div>
+                    <div class="field">
+                        <label>Группа</label>
+                        <select id="groupSelect" onchange="filterWorkersByGroup()"></select>
+                    </div>
+                </div>
+
+                <div class="field">
+                    <label>Сотрудник</label>
+                    <select id="workerSelect"></select>
+                </div>
+
+                <div id="adminManagementPanel" style="display: none; margin-bottom: 20px;">
+                    <div class="divider"></div>
+                    <div class="input-row">
+                        <div class="field">
+                            <label>Новый Альянс</label>
+                            <input type="text" id="newAllianceInput" placeholder="Название альянса">
+                            <button class="btn-outline" style="margin-top: 5px;" onclick="addAlliance()">Добавить Альянс</button>
+                        </div>
+                        <div class="field">
+                            <label>Новая Группа</label>
+                            <input type="text" id="newGroupInput" placeholder="Название группы">
+                            <button class="btn-outline" style="margin-top: 5px;" onclick="addGroup()">Добавить Группу</button>
+                        </div>
+                    </div>
+                    <div class="input-row">
+                        <div class="field">
+                            <label>Новый Сотрудник</label>
+                            <input type="text" id="newWorkerInput" placeholder="ФИО сотрудника">
+                            <select id="newWorkerAllianceSelect"></select>
+                            <select id="newWorkerGroupSelect"></select>
+                            <button class="btn-outline" style="margin-top: 5px;" onclick="addWorker()">Добавить Сотрудника</button>
+                        </div>
+                    </div>
+                    <div class="divider"></div>
+                </div>
+
+                <div class="divider"></div>
+
+                <div class="input-row">
+                    <div class="field"><label>Дата</label><input type="date" id="dateInput" value="2026-04-10"></div>
+                    <div class="field"><label>Начало</label><input type="time" id="startTime" value="09:00"></div>
+                    <div class="field"><label>Конец</label><input type="time" id="endTime" value="18:00"></div>
+                </div>
+                <button class="btn-main" onclick="addSchedule()">Запланировать</button>
+            </section>
+
+            <section class="table-section">
+                <div class="table-container">
+                    <table id="scheduleTable">
+                        <thead>
+                            <tr>
+                                <th>Группа</th>
+                                <th>Сотрудник</th>
+                                <th>Смены</th>
+                                <th>Действия</th>
+                            </tr>
+                        </thead>
+                        <tbody></tbody>
+                    </table>
+                </div>
+            </section>
+        </main>
+
+        <aside class="sidebar" id="statsSidebar">
+            <h2 class="neon-blue">Общий свод</h2>
+            <div class="stats-card">
+                <div id="dayStats" class="stat-list-alt"></div>
+                <div class="divider"></div>
+                <p>До 11:00: <span class="neon-blue" id="earlyShifts">0%</span></p>
+                <p>После 19:00: <span class="neon-pink" id="lateShifts">0%</span></p>
+                <div class="divider"></div>
+                <button class="btn-main" style="width: 100%;" onclick="exportToCSV()">Выгрузить CSV</button>
+            </div>
+        </aside>
+    </div>
+
+    <script>
+        const role = localStorage.getItem('userRole');
+        const STORAGE_KEY = 'all_schedules_db';
+        const STAFF_KEY = 'staff_hierarchy_db';
+        const daysRu = ['Воскресенье', 'Понедельник', 'Вторник', 'Среда', 'Четверг', 'Пятница', 'Суббота'];
+        const MANAGER_GROUP = "Группа Сизых";
+
+        let staffData = {
+            alliances: ['Альянс Пупкина', 'Альянс Тумбочка', 'Альянс Петровича', 'Альянс Сидоровича'],
+            groups: ['Группа Сизых', 'Группа Василькова', 'Группа Петькова', 'Группа Ивановых'],
+            workers: [
+                { name: 'Сизый Александр Петрович', group: 'Группа Сизых', alliance: 'Альянс Пупкина' },
+                { name: 'Васильков Иван Игоревич', group: 'Группа Василькова', alliance: 'Альянс Тумбочка' },
+                { name: 'Петьков Дмитрий Олегович', group: 'Группа Петькова', alliance: 'Альянс Петровича' },
+                { name: 'Иванова Мария Сергеевна', group: 'Группа Ивановых', alliance: 'Альянс Сидоровича' }
+            ]
+        };
+
+        function loadStaffData() {
+            const saved = localStorage.getItem(STAFF_KEY);
+            if (saved) staffData = JSON.parse(saved);
+            else localStorage.setItem(STAFF_KEY, JSON.stringify(staffData));
+        }
+
+        function saveStaffData() {
+            localStorage.setItem(STAFF_KEY, JSON.stringify(staffData));
+        }
+
+        function populateAlliances() {
+            const select = document.getElementById('allianceSelect');
+            select.innerHTML = '';
+            staffData.alliances.forEach(a => { const opt = document.createElement('option'); opt.value = a; opt.textContent = a; select.appendChild(opt); });
+        }
+
+        function populateGroups(allianceFilter = null) {
+            const select = document.getElementById('groupSelect');
+            select.innerHTML = '';
+            let groupsToShow = staffData.groups;
+            if (allianceFilter) {
+                const workersInAlliance = staffData.workers.filter(w => w.alliance === allianceFilter);
+                groupsToShow = [...new Set(workersInAlliance.map(w => w.group))];
+            }
+            groupsToShow.forEach(g => { const opt = document.createElement('option'); opt.value = g; opt.textContent = g; select.appendChild(opt); });
+            if (select.options.length > 0) filterWorkersByGroup();
+        }
+
+        function filterGroupsByAlliance() {
+            if (role !== 'admin') return;
+            const alliance = document.getElementById('allianceSelect').value;
+            populateGroups(alliance);
+        }
+
+        function populateWorkers(groupFilter = null) {
+            const select = document.getElementById('workerSelect');
+            select.innerHTML = '';
+            let workersToShow = staffData.workers;
+            if (groupFilter) workersToShow = staffData.workers.filter(w => w.group === groupFilter);
+            workersToShow.forEach(w => { const opt = document.createElement('option'); opt.value = w.name; opt.textContent = w.name; opt.dataset.group = w.group; select.appendChild(opt); });
+        }
+
+        function filterWorkersByGroup() {
+            const group = document.getElementById('groupSelect').value;
+            populateWorkers(group);
+        }
+
+        window.onload = () => {
+            if (!role) window.location.href = 'login.html';
+            document.getElementById('roleDisplay').innerText = role.toUpperCase();
+            loadStaffData();
+
+            if (role === 'admin') {
+                document.getElementById('adminManagementPanel').style.display = 'block';
+                populateAlliances();
+                filterGroupsByAlliance();
+                populateAdminWorkerFormSelects();
+            } else {
+                populateAlliances();
+                populateGroups();
+                populateWorkers();
+            }
+
+            if (role === 'worker') {
+                document.getElementById('adminControls').style.display = 'none';
+                document.getElementById('statsSidebar').style.display = 'none';
+                document.getElementById('workerSelect').value = "Сизый Александр Петрович";
+                document.getElementById('workerSelect').disabled = true;
+                document.querySelector('.container').style.gridTemplateColumns = '1fr';
+            } 
+            else if (role === 'manager') {
+                document.getElementById('groupSelect').value = MANAGER_GROUP;
+                document.getElementById('groupSelect').disabled = true;
+                document.getElementById('allianceSelect').disabled = true;
+                filterWorkersByGroup();
+            }
+            loadSchedules();
+        };
+
+        function populateAdminWorkerFormSelects() {
+            const allianceSel = document.getElementById('newWorkerAllianceSelect');
+            const groupSel = document.getElementById('newWorkerGroupSelect');
+            allianceSel.innerHTML = ''; groupSel.innerHTML = '';
+            staffData.alliances.forEach(a => { const opt = document.createElement('option'); opt.value = a; opt.textContent = a; allianceSel.appendChild(opt); });
+            staffData.groups.forEach(g => { const opt = document.createElement('option'); opt.value = g; opt.textContent = g; groupSel.appendChild(opt); });
+        }
+
+        function addAlliance() {
+            const newAlliance = document.getElementById('newAllianceInput').value.trim();
+            if (!newAlliance) return alert('Введите название альянса');
+            if (staffData.alliances.includes(newAlliance)) return alert('Такой альянс уже существует');
+            staffData.alliances.push(newAlliance);
+            saveStaffData();
+            populateAlliances();
+            populateAdminWorkerFormSelects();
+            document.getElementById('newAllianceInput').value = '';
+        }
+
+        function addGroup() {
+            const newGroup = document.getElementById('newGroupInput').value.trim();
+            if (!newGroup) return alert('Введите название группы');
+            if (staffData.groups.includes(newGroup)) return alert('Такая группа уже существует');
+            staffData.groups.push(newGroup);
+            saveStaffData();
+            populateGroups();
+            populateAdminWorkerFormSelects();
+            document.getElementById('newGroupInput').value = '';
+        }
+
+        function addWorker() {
+            const name = document.getElementById('newWorkerInput').value.trim();
+            const alliance = document.getElementById('newWorkerAllianceSelect').value;
+            const group = document.getElementById('newWorkerGroupSelect').value;
+            if (!name) return alert('Введите ФИО сотрудника');
+            if (staffData.workers.some(w => w.name === name)) return alert('Такой сотрудник уже существует');
+            staffData.workers.push({ name, group, alliance });
+            saveStaffData();
+            if (role === 'admin') filterWorkersByGroup();
+            populateWorkers(document.getElementById('groupSelect').value);
+            document.getElementById('newWorkerInput').value = '';
+        }
+
+        function addSchedule() {
+            let group, worker;
+            if (role === 'worker') { group = 'Группа Сизых'; worker = "Сизый Александр Петрович"; }
+            else { group = document.getElementById('groupSelect').value; worker = document.getElementById('workerSelect').value; }
+            const date = document.getElementById('dateInput').value;
+            const start = document.getElementById('startTime').value;
+            const end = document.getElementById('endTime').value;
+
+            if (!start || !end || !date) return alert('Заполни поля!');
+
+            const newShift = { id: Date.now(), group, worker, date, start, end };
+            const saved = JSON.parse(localStorage.getItem(STORAGE_KEY) || '[]');
+            saved.push(newShift);
+            localStorage.setItem(STORAGE_KEY, JSON.stringify(saved));
+            loadSchedules();
+        }
+
+        function loadSchedules() {
+            let saved = JSON.parse(localStorage.getItem(STORAGE_KEY) || '[]');
+            if (role === 'manager') saved = saved.filter(s => s.group === MANAGER_GROUP);
+            else if (role === 'worker') saved = saved.filter(s => s.worker === "Сизый Александр Петрович");
+
+            const tbody = document.querySelector('#scheduleTable tbody');
+            tbody.innerHTML = '';
+            saved.forEach(shift => {
+                const row = tbody.insertRow();
+                row.innerHTML = `
+                    <td>${shift.group}</td>
+                    <td class="neon-pink">${shift.worker}</td>
+                    <td>${shift.date} (${shift.start}-${shift.end})</td>
+                    <td class="actions-cell">
+                        <button class="btn-edit" onclick="editShift(${shift.id})">✎</button>
+                        <button class="btn-del" onclick="deleteShift(${shift.id})">🗑</button>
+                    </td>`;
+            });
+            if (role !== 'worker') updateStats(saved);
+        }
+
+        function editShift(id) {
+            const saved = JSON.parse(localStorage.getItem(STORAGE_KEY) || '[]');
+            const shift = saved.find(s => s.id === id);
+            if (shift) {
+                document.getElementById('groupSelect').value = shift.group;
+                document.getElementById('workerSelect').value = shift.worker;
+                document.getElementById('dateInput').value = shift.date;
+                document.getElementById('startTime').value = shift.start;
+                document.getElementById('endTime').value = shift.end;
+                deleteShift(id);
+                window.scrollTo({ top: 0, behavior: 'smooth' });
+            }
+        }
+
+        function updateStats(data) {
+            const total = data.length;
+            const dayCounts = [0,0,0,0,0,0,0];
+            let early = 0, late = 0;
+            data.forEach(s => {
+                dayCounts[new Date(s.date).getDay()]++;
+                if (parseInt(s.start) < 11) early++;
+                if (parseInt(s.end) >= 19) late++;
+            });
+            document.getElementById('dayStats').innerHTML = [1,2,3,4,5,6,0].map(i => {
+                const pct = total ? ((dayCounts[i]/total)*100).toFixed(2) : "0.00";
+                return `<div class="stat-line"><span>${daysRu[i]}:</span> <b>${pct}%</b></div>`;
+            }).join('');
+            document.getElementById('earlyShifts').innerText = total ? ((early/total)*100).toFixed(2) + '%' : '0%';
+            document.getElementById('lateShifts').innerText = total ? ((late/total)*100).toFixed(2) + '%' : '0%';
+        }
+
+        function deleteShift(id) {
+            let saved = JSON.parse(localStorage.getItem(STORAGE_KEY) || '[]');
+            saved = saved.filter(s => s.id !== id);
+            localStorage.setItem(STORAGE_KEY, JSON.stringify(saved));
+            loadSchedules();
+        }
+
+        function exportToCSV() {
+            let saved = JSON.parse(localStorage.getItem(STORAGE_KEY) || '[]');
+            if (role === 'manager') saved = saved.filter(s => s.group === MANAGER_GROUP);
+            let csv = "\uFEFFГруппа;Сотрудник;Дата;Начало;Конец\n";
+            saved.forEach(s => { csv += `${s.group};${s.worker};${s.date};${s.start};${s.end}\n`; });
+            const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+            const link = document.createElement("a");
+            link.href = URL.createObjectURL(blob);
+            link.setAttribute("download", `report.csv`);
+            link.click();
+        }
+
+        function logout() { localStorage.removeItem('userRole'); window.location.href = 'login.html'; }
+    </script>
+</body>
+</html>

@@ -1,0 +1,25 @@
+[23:24:19] [main/INFO]: ModLauncher running: args [--username, bloogas, --version, ForgeOptiFine 1.16.5, --gameDir, D:\, --assetsDir, D:\assets, --assetIndex, 1.16, --uuid, bf40118e-635f-11ee-a9a3-f02f74958d22, --accessToken, ????????, --userType, mojang, --versionType, modified, --width, 925, --height, 530, --launchTarget, fmlclient, --fml.forgeVersion, 36.2.39, --fml.mcVersion, 1.16.5, --fml.forgeGroup, net.minecraftforge, --fml.mcpVersion, 20210115.111550]
+[23:24:19] [main/INFO]: ModLauncher 8.1.3+8.1.3+main-8.1.x.c94d18ec starting: java version 1.8.0_51 by Oracle Corporation
+[23:24:19] [main/WARN]: LEGACY JDK DETECTED, SECURED JAR HANDLING DISABLED
+[23:24:20] [main/INFO]: OptiFineTransformationService.onLoad
+[23:24:20] [main/INFO]: OptiFine ZIP file: D:\mods\OptiFine-OptiFine-1.16.5_HD_U_G8_pre2.jar
+[23:24:20] [main/INFO]: Target.PRE_CLASS is available
+[23:24:20] [main/INFO]: Added Lets Encrypt root certificates as additional trust
+[23:24:20] [main/INFO]: SpongePowered MIXIN Subsystem Version=0.8.4 Source=file:/D:/libraries/org/spongepowered/mixin/0.8.4/mixin-0.8.4.jar Service=ModLauncher Env=CLIENT
+[23:24:20] [main/INFO]: OptiFineTransformationService.initialize
+[23:24:20] [main/INFO]: [java.lang.ThreadGroup:uncaughtException:1052]: java.lang.NullPointerException
+[23:24:20] [main/INFO]: [java.lang.ThreadGroup:uncaughtException:1052]: 	at java.nio.file.Files.provider(Files.java:97)
+[23:24:20] [main/INFO]: [java.lang.ThreadGroup:uncaughtException:1052]: 	at java.nio.file.Files.readAttributes(Files.java:1737)
+[23:24:20] [main/INFO]: [java.lang.ThreadGroup:uncaughtException:1052]: 	at java.nio.file.Files.isDirectory(Files.java:2192)
+[23:24:20] [main/INFO]: [java.lang.ThreadGroup:uncaughtException:1052]: 	at net.minecraftforge.fml.loading.FileUtils.getOrCreateDirectory(FileUtils.java:23)
+[23:24:20] [main/INFO]: [java.lang.ThreadGroup:uncaughtException:1052]: 	at net.minecraftforge.fml.loading.FMLPaths.loadAbsolutePaths(FMLPaths.java:62)
+[23:24:20] [main/INFO]: [java.lang.ThreadGroup:uncaughtException:1052]: 	at net.minecraftforge.fml.loading.FMLPaths.setup(FMLPaths.java:52)
+[23:24:20] [main/INFO]: [java.lang.ThreadGroup:uncaughtException:1052]: 	at net.minecraftforge.fml.loading.FMLServiceProvider.initialize(FMLServiceProvider.java:65)
+[23:24:20] [main/INFO]: [java.lang.ThreadGroup:uncaughtException:1052]: 	at cpw.mods.modlauncher.TransformationServiceDecorator.onInitialize(TransformationServiceDecorator.java:68)
+[23:24:20] [main/INFO]: [java.lang.ThreadGroup:uncaughtException:1052]: 	at cpw.mods.modlauncher.TransformationServicesHandler.lambda$initialiseTransformationServices$7(TransformationServicesHandler.java:107)
+[23:24:20] [main/INFO]: [java.lang.ThreadGroup:uncaughtException:1052]: 	at cpw.mods.modlauncher.TransformationServicesHandler$$Lambda$108/1759899303.accept(Unknown Source)
+[23:24:20] [main/INFO]: [java.lang.ThreadGroup:uncaughtException:1052]: 	at java.util.HashMap$Values.forEach(HashMap.java:972)
+[23:24:20] [main/INFO]: [java.lang.ThreadGroup:uncaughtException:1052]: 	at cpw.mods.modlauncher.TransformationServicesHandler.initialiseTransformationServices(TransformationServicesHandler.java:107)
+[23:24:20] [main/INFO]: [java.lang.ThreadGroup:uncaughtException:1052]: 	at cpw.mods.modlauncher.TransformationServicesHandler.initializeTransformationServices(TransformationServicesHandler.java:59)
+[23:24:20] [main/INFO]: [java.lang.ThreadGroup:uncaughtException:1052]: 	at cpw.mods.modlauncher.Launcher.run(Launcher.java:76)
+[23:24:20] [main/INFO]: [java.lang.ThreadGroup:uncaughtException:1052]: 	at cpw.mods.modlauncher.Launcher.main(Launcher.java:66)

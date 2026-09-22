@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <title>Вход | $win</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body class="login-page">
+    <div class="card login-card">
+        <h1 style="text-align: center; margin-bottom: 30px;">$<span class="neon-blue">win</span></h1>
+        <form id="loginForm">
+            <div class="field">
+                <label>Логин</label>
+                <input type="text" id="login" placeholder="admin / boss / user" required>
+            </div>
+            <div class="field">
+                <label>Пароль</label>
+                <input type="password" id="password" placeholder="••••••••" required>
+            </div>
+            <button type="submit" class="btn-main" style="width: 100%; margin-top: 10px;">Войти в систему</button>
+            <p id="error" class="error-msg">Неверный логин или пароль!</p>
+        </form>
+        <div class="hint">
+            <p>Admin: admin / sqrt777</p>
+            <p>Boss: boss / 123 | User: user / 111</p>
+        </div>
+    </div>
+
+    <script>
+        document.getElementById('loginForm').onsubmit = function(e) {
+            e.preventDefault();
+            const log = document.getElementById('login').value;
+            const pass = document.getElementById('password').value;
+            let role = '';
+
+            if (log === 'admin' && pass === 'sqrt777') role = 'admin';
+            else if (log === 'boss' && pass === '123') role = 'manager';
+            else if (log === 'user' && pass === '111') role = 'worker';
+
+            if (role) {
+                localStorage.setItem('userRole', role);
+                window.location.href = 'index.html';
+            } else {
+                document.getElementById('error').style.display = 'block';
+            }
+        };
+    </script>
+</body>
+</html>
